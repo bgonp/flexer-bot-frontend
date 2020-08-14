@@ -1,26 +1,21 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from 'react'
+import './App.css'
+import { TmiForm } from './components/TmiForm'
+import { RepliesContext } from './context/RepliesContext'
+import { useReplier } from './hooks/useReplier'
+import { useTmi } from './hooks/useTmi'
 
 function App() {
+  const replier = useReplier()
+  const tmi = useTmi(replier.getReply)
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <RepliesContext.Provider value={{ ...tmi, ...replier }}>
+        <TmiForm />
+      </RepliesContext.Provider>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
