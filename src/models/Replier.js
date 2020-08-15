@@ -1,6 +1,6 @@
 import { Rule } from './Rule'
 
-export class Reply {
+export class Replier {
   constructor({ id = 0, rule, replies = [] }) {
     this.id = id
     this.rule = rule
@@ -8,7 +8,7 @@ export class Reply {
   }
 
   static get(object) {
-    return new Reply({
+    return new Replier({
       id: object.id,
       rule: Rule.get(object.rule),
       replies: object.replies,

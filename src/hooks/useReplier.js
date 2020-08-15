@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from 'react'
 import { useLocalStorage } from './useLocalStorage'
-import { Reply } from 'models/Reply'
+import { Replier } from 'models/Replier'
 
 export const useReplier = () => {
-  const [replies, setReplies] = useLocalStorage('replies', [])
+  const [cases, setCases] = useLocalStorage('cases', [])
 
-  const repliers = useMemo(() => replies.map((reply) => Reply.get(reply)), [replies])
+  const repliers = useMemo(() => cases.map((reply) => Replier.get(reply)), [cases])
 
   const getReply = useCallback(
     (message) => {
@@ -16,8 +16,8 @@ export const useReplier = () => {
   )
 
   return {
-    replies,
-    setReplies,
+    cases,
+    setCases,
     getReply,
   }
 }

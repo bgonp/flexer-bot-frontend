@@ -1,20 +1,16 @@
 import React from 'react'
 import './App.css'
-import { TmiForm } from './components/TmiForm'
-import { RepliesContext } from './context/RepliesContext'
-import { useReplier } from './hooks/useReplier'
-import { useTmi } from './hooks/useTmi'
+import { AuthContext } from 'context/AuthContext'
+import { useAuth } from 'hooks/useAuth'
+import { MainRouter } from 'routers/MainRouter'
 
-function App() {
-  const replier = useReplier()
-  const tmi = useTmi(replier.getReply)
+const App = () => {
+  const auth = useAuth()
 
   return (
-    <div className="App">
-      <RepliesContext.Provider value={{ ...tmi, ...replier }}>
-        <TmiForm />
-      </RepliesContext.Provider>
-    </div>
+    <AuthContext.Provider value={auth}>
+      <MainRouter />
+    </AuthContext.Provider>
   )
 }
 

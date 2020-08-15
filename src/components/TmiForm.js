@@ -1,26 +1,28 @@
 import React, { useContext } from 'react'
 import { RepliesContext } from 'context/RepliesContext'
+import { Loading } from './Loading'
 
 export const TmiForm = () => {
   const {
     username,
-    setUsername,
     token,
-    setToken,
     channel,
+    setUsername,
+    setToken,
     setChannel,
+    loading,
+    connected,
     connect,
     disconnect,
-    status,
-  } = useContext(RepliesContext)
+  } = useContext(RepliesContext).tmi
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    status.connected || connect()
+    connected || connect()
   }
 
-  if (status.loading) {
-    return <h3>Loading...</h3>
+  if (loading) {
+    return <Loading />
   }
 
   return (
@@ -28,22 +30,25 @@ export const TmiForm = () => {
       <input
         type="text"
         value={username}
-        onChange={({ target }) => setUsername(target.value)}
+        onChange={({ target }) => connected || setUsername(target.value)}
         placeholder="Username..."
+        disabled={connected}
       />
       <input
         type="text"
         value={token}
-        onChange={({ target }) => setToken(target.value)}
+        onChange={({ target }) => connected || setToken(target.value)}
         placeholder="Token..."
+        disabled={connected}
       />
       <input
         type="text"
         value={channel}
-        onChange={({ target }) => setChannel(target.value)}
+        onChange={({ target }) => connected || setChannel(target.value)}
         placeholder="Channel..."
+        disabled={connected}
       />
-      {status.connected ? (
+      {connected ? (
         <button type="button" onClick={disconnect}>
           Disconnect
         </button>

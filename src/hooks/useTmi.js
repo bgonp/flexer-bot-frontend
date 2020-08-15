@@ -24,12 +24,18 @@ export const useTmi = (getReply) => {
   const [token, setToken] = useLocalStorage('token', '')
   const [channel, setChannel] = useLocalStorage('channel', '')
 
-  const [status, setStatus] = useState({ loading: false, connected: false })
+  const [loading, setLoading] = useState(false)
+  const [connected, setConnected] = useState(false)
+
+  const setStatus = useCallback(({ loading, connected }) => {
+    loading !== undefined && setLoading(loading)
+    connected !== undefined && setConnected(connected)
+  }, [])
 
   const disconnect = useCallback(async () => {
-    setStatus((status) => ({ ...status, loading: true }))
-
     if (client.readyState() !== 'CLOSED') {
+      setStatus({ loading: true })
+
       try {
         await client.disconnect()
         client.channels.length = 0
@@ -37,25 +43,28 @@ export const useTmi = (getReply) => {
         console.log(error)
       }
     }
-  }, [])
+  }, [setStatus])
 
   const connect = useCallback(async () => {
-    setStatus((status) => ({ ...status, loading: true }))
+    if (client.readyState() === 'CLOSED') {
+      setStatus({ loading: true })
 
-    await disconnect()
+      client.opts.identity.username = username
+      client.opts.identity.password = token
+      client.opts.channels = [channel]
 
-    client.opts.identity.username = username
-    client.opts.identity.password = token
-    client.opts.channels = [channel]
-
-    client.connect()
-  }, [username, token, channel, disconnect])
+      try {
+        await client.connect()
+      } catch (error) {
+        console.error(error) // TODO
+      }
+    }
+  }, [username, token, channel, setStatus])
 
   const sendReply = useCallback(
     (message) => {
       if (message) {
         const reply = getReply(message)
-        client.say(channel, 'hey!')
         reply && client.say(channel, reply)
       }
     },
@@ -65,18 +74,20 @@ export const useTmi = (getReply) => {
   useEffect(() => {
     client.on('disconnected', () => setStatus({ loading: false, connected: false }))
     client.on('connecting', () => setStatus({ loading: true, connected: false }))
-    client.on('connected', () => setStatus({ loading: false, connected: true }))
-    client.on('chat', (channel, userstate, message, self) => self || sendReply(message))
+    client.on('connected', (addr, port) => setStatus({ loading: false, connected: true }))
 
-    return async () => {
-      await disconnect()
-
+    return () => {
       client.removeAllListeners('disconnected')
       client.removeAllListeners('connecting')
       client.removeAllListeners('connected')
-      client.removeAllListeners('chat')
     }
-  }, [disconnect, sendReply])
+  }, [setStatus])
+
+  useEffect(() => {
+    client.on('chat', (channel, userstate, message, self) => self || sendReply(message))
+
+    return () => client.removeAllListeners('chat')
+  }, [sendReply])
 
   return {
     username,
@@ -85,7 +96,8 @@ export const useTmi = (getReply) => {
     setUsername,
     setToken,
     setChannel,
-    status,
+    loading,
+    connected,
     connect,
     disconnect,
   }
