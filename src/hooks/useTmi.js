@@ -40,7 +40,7 @@ export const useTmi = (getReply) => {
         await client.disconnect()
         client.channels.length = 0
       } catch (error) {
-        console.log(error)
+        console.error(error)
       }
     }
   }, [setStatus])

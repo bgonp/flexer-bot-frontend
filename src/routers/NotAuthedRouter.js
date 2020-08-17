@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import { AuthContext } from 'context/AuthContext'
+import AuthContext from 'context/AuthContext'
 import { Redirect, Route } from 'react-router-dom'
 
 export const NotAuthedRouter = ({ component: Component, ...rest }) => {

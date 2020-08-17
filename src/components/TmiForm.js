@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import { RepliesContext } from 'context/RepliesContext'
+import RepliersContext from 'context/RepliersContext'
 import { Loading } from './Loading'
 
 export const TmiForm = () => {
@@ -14,7 +14,7 @@ export const TmiForm = () => {
     connected,
     connect,
     disconnect,
-  } = useContext(RepliesContext).tmi
+  } = useContext(RepliersContext).tmi
 
   const handleSubmit = (e) => {
     e.preventDefault()
