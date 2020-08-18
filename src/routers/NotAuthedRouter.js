@@ -3,9 +3,9 @@ import AuthContext from 'context/AuthContext'
 import { Redirect, Route } from 'react-router-dom'
 
 export const NotAuthedRouter = ({ component: Component, ...rest }) => {
-  const { uid } = useContext(AuthContext)
+  const { isAuthed } = useContext(AuthContext)
 
-  if (uid) {
+  if (isAuthed) {
     return <Redirect to="/" />
   }
 

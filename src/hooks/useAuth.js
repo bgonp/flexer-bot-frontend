@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react'
-import { loginUser, logoutUser, refreshToken } from 'services/auth'
+import { registerUser, loginUser, logoutUser, initJwt } from 'services/auth'
 
 const initialState = {
-  id: 0,
+  isAuthed: false,
+  jwt: '',
+  id: null,
   email: '',
   username: '',
   token: '',
@@ -10,46 +12,44 @@ const initialState = {
 }
 
 export const useAuth = () => {
-  const [jwt, setJwt] = useState('')
-  const [user, setUser] = useState(initialState)
+  const [auth, setAuth] = useState(initialState)
 
   const check = useCallback(() => {
-    refreshToken()
+    initJwt()
       .then((response) => {
         if (response) {
-          setJwt(response.jwt)
-          setUser(response.user)
+          setAuth({ isAuthed: true, jwt: response.jwt, ...response.user })
         }
       })
       .catch((error) => {
-        setJwt('')
-        setUser(initialState)
+        setAuth(initialState)
         logoutUser()
         console.error(error)
       })
   }, [])
 
-  const register = useCallback(async (email, password) => {
-    // TODO
-  }, [])
+  const fetchUser = useCallback(
+    (callback) => async (email, password) => {
+      try {
+        const response = await callback(email, password)
+        setAuth({ isAuthed: true, jwt: response.jwt, ...response.user })
 
-  const login = useCallback(async (email, password) => {
-    try {
-      const response = await loginUser(email, password)
-      setJwt(response.jwt)
-      setUser(response.user)
+        return { success: true }
+      } catch (error) {
+        return { success: false, error: error.toString() }
+      }
+    },
+    []
+  )
 
-      return { success: true }
-    } catch (error) {
-      return { success: false, error: error.toString() }
-    }
-  }, [])
+  const register = useCallback(fetchUser(registerUser))
+
+  const login = useCallback(fetchUser(loginUser))
 
   const logout = useCallback(() => {
-    setJwt('')
-    setUser(initialState)
+    setAuth(initialState)
     logoutUser()
   }, [])
 
-  return { jwt, user, check, register, login, logout }
+  return { ...auth, check, register, login, logout }
 }
