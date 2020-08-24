@@ -7,7 +7,9 @@ const AuthContext = createContext({})
 export const AuthContextProvider = ({ children }) => {
   const { check, ...auth } = useAuth()
 
-  useEffect(check, [])
+  useEffect(() => {
+    check()
+  }, [check])
 
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>
 }

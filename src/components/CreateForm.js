@@ -1,13 +1,13 @@
-import React, { useState, useContext, useCallback } from 'react'
-import { useHistory } from 'react-router-dom'
+import React, { useContext, useState, useCallback } from 'react'
 import { useForm, Controller } from 'react-hook-form'
+import { useHistory } from 'react-router-dom'
 import { Alert, Input, Button, Form, Spin, Space } from 'antd'
-import { RobotOutlined, LockOutlined } from '@ant-design/icons'
+import { RobotOutlined, LockOutlined, VideoCameraOutlined } from '@ant-design/icons'
 
 import AuthContext from 'context/AuthContext'
 
-export const LoginForm = () => {
-  const { login } = useContext(AuthContext)
+export const CreateForm = () => {
+  const { create } = useContext(AuthContext)
 
   const history = useHistory()
 
@@ -16,22 +16,22 @@ export const LoginForm = () => {
 
   const { control, errors, handleSubmit } = useForm({
     mode: 'onChange',
-    defaultValues: { username: '', password: '' },
+    defaultValues: { username: '', token: '', channel: '' },
   })
 
   const onSubmit = useCallback(
-    async ({ username, password }) => {
+    async ({ username, token, channel }) => {
       setLoading(true)
       setError(false)
 
-      const { success, error } = await login(username, password)
+      const { success, error } = await create({ username, token, channel })
 
       if (!success) {
         setLoading(false)
         setError(error)
       }
     },
-    [login, setLoading]
+    [create]
   )
 
   return (
@@ -59,19 +59,31 @@ export const LoginForm = () => {
         />
 
         <Controller
-          name="password"
+          name="token"
           control={control}
-          rules={{
-            required: 'Password required',
-            minLength: { value: 6, message: 'Min 6 characters' },
-          }}
+          rules={{ required: 'Token required' }}
           as={
             <Form.Item
-              validateStatus={errors.password && 'error'}
-              help={errors.password && errors.password.message}
-              label="Password"
+              validateStatus={errors.token && 'error'}
+              help={errors.token && errors.token.message}
+              label="Token"
             >
-              <Input.Password disabled={loading} prefix={<LockOutlined />} />
+              <Input disabled={loading} prefix={<LockOutlined />} />
+            </Form.Item>
+          }
+        />
+
+        <Controller
+          name="channel"
+          control={control}
+          rules={{ required: 'Channel required' }}
+          as={
+            <Form.Item
+              validateStatus={errors.channel && 'error'}
+              help={errors.channel && errors.channel.message}
+              label="Channel"
+            >
+              <Input disabled={loading} prefix={<VideoCameraOutlined />} />
             </Form.Item>
           }
         />
@@ -79,7 +91,7 @@ export const LoginForm = () => {
         <Form.Item wrapperCol={{ offset: 6, span: 12 }}>
           <Space>
             <Button shape="round" type="primary" htmlType="submit" disabled={loading}>
-              Log in
+              Create
             </Button>
 
             <Button

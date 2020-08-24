@@ -3,10 +3,10 @@ import { Redirect } from 'react-router-dom'
 
 import AuthContext from 'context/AuthContext'
 
+import { CreateForm } from 'components/CreateForm'
 import { Layout } from 'components/Layout'
-import { LoginForm } from 'components/LoginForm'
 
-export const LoginPage = () => {
+export const CreatePage = () => {
   const { isCreated } = useContext(AuthContext)
 
   if (isCreated) {
@@ -15,7 +15,7 @@ export const LoginPage = () => {
 
   return (
     <Layout>
-      <LoginForm />
+      <CreateForm />
     </Layout>
   )
 }

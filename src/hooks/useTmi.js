@@ -1,101 +1,60 @@
-import { useState, useEffect, useCallback } from 'react'
-import { client as tmi } from 'tmi.js'
-import { useLocalStorage } from './useLocalStorage'
+import { useState, useEffect, useCallback, useContext } from 'react'
+import tmi, { AUTH_STATUS } from 'services/tmi'
+import AuthContext from 'context/AuthContext'
 
-const config = {
-  options: {
-    debug: true, // TODO: CAMBIAR
-  },
-  connection: {
-    reconnect: true,
-    secure: true,
-  },
-  identity: {
-    username: '',
-    password: '',
-  },
-  channels: [],
-}
-
-const client = new tmi(config)
-
-export const useTmi = (getReply) => {
-  const [username, setUsername] = useLocalStorage('username', '')
-  const [token, setToken] = useLocalStorage('token', '')
-  const [channel, setChannel] = useLocalStorage('channel', '')
+export const useTmi = (getReply = () => {}) => {
+  const {
+    update,
+    bot: { username, token, channel },
+  } = useContext(AuthContext)
 
   const [loading, setLoading] = useState(false)
   const [connected, setConnected] = useState(false)
+  const [authStatus, setAuthStatus] = useState(AUTH_STATUS.UNCHECKED)
 
-  const setStatus = useCallback(({ loading, connected }) => {
+  const setStatus = useCallback(({ loading, connected, authStatus }) => {
     loading !== undefined && setLoading(loading)
     connected !== undefined && setConnected(connected)
+    authStatus !== undefined && setAuthStatus(authStatus)
   }, [])
 
-  const disconnect = useCallback(async () => {
-    if (client.readyState() !== 'CLOSED') {
-      setStatus({ loading: true })
-
-      try {
-        await client.disconnect()
-        client.channels.length = 0
-      } catch (error) {
-        console.error(error)
-      }
-    }
-  }, [setStatus])
-
-  const connect = useCallback(async () => {
-    if (client.readyState() === 'CLOSED') {
-      setStatus({ loading: true })
-
-      client.opts.identity.username = username
-      client.opts.identity.password = token
-      client.opts.channels = [channel]
-
-      try {
-        await client.connect()
-      } catch (error) {
-        console.error(error) // TODO
-      }
-    }
-  }, [username, token, channel, setStatus])
-
-  const sendReply = useCallback(
-    (message) => {
-      if (message) {
-        const reply = getReply(message)
-        reply && client.say(channel, reply)
+  const connect = useCallback(
+    async ({ username, token, channel }) => {
+      if (tmi.isDisconnected()) {
+        setStatus({ loading: true })
+        update({ username, token, channel })
+        await tmi.connect(username, token, channel)
       }
     },
-    [channel, getReply]
+    [setStatus, update]
   )
 
-  useEffect(() => {
-    client.on('disconnected', () => setStatus({ loading: false, connected: false }))
-    client.on('connecting', () => setStatus({ loading: true, connected: false }))
-    client.on('connected', (addr, port) => setStatus({ loading: false, connected: true }))
-
-    return () => {
-      client.removeAllListeners('disconnected')
-      client.removeAllListeners('connecting')
-      client.removeAllListeners('connected')
+  const disconnect = useCallback(async () => {
+    if (!tmi.isDisconnected()) {
+      setStatus({ loading: true })
+      await tmi.disconnect()
     }
   }, [setStatus])
 
   useEffect(() => {
-    client.on('chat', (channel, userstate, message, self) => self || sendReply(message))
+    tmi.listenEvents(setStatus)
+    return () => {
+      tmi.unListenEvents()
+      !tmi.isDisconnected() && tmi.disconnect()
+    }
+  }, [setStatus])
 
-    return () => client.removeAllListeners('chat')
-  }, [sendReply])
+  useEffect(() => {
+    setAuthStatus(AUTH_STATUS.UNCHECKED)
+  }, [username, token, channel])
+
+  useEffect(() => {
+    tmi.listenChat(getReply)
+    return () => tmi.unListenChat()
+  }, [getReply])
 
   return {
-    username,
-    token,
-    channel,
-    setUsername,
-    setToken,
-    setChannel,
+    authStatus,
     loading,
     connected,
     connect,

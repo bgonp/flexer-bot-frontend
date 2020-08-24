@@ -1,12 +1,12 @@
 const jwtTTL = 7_200_000 // 2 hours
-const refreshTimer = 600_000 // 10 minutes
+const refreshTimer = 10_000 //600_000 // 10 minutes
 
-const fetchUser = (endpoint) => async (email, password) => {
+const fetchBot = (endpoint, keys) => async (params) => {
   const url = `${process.env.REACT_APP_API_URL}/${endpoint}`
   const data = {
     method: 'POST',
     headers: { 'Content-type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(keys.map((key) => params[key])),
   }
 
   const response = await fetch(url, data)
@@ -18,22 +18,27 @@ const fetchUser = (endpoint) => async (email, password) => {
 
     setTimeout(checkJwt, refreshTimer)
 
-    return { jwt: body.jwt, user: body.user }
+    return { jwt: body.jwt, bot: body.bot }
   } else {
     throw new Error(body.message)
   }
 }
 
-export const registerUser = fetchUser('auth/register')
+const registerBot = fetchBot('auth/register', [
+  'username',
+  'password',
+  'token',
+  'channel',
+])
 
-export const loginUser = fetchUser('auth/login')
+const loginBot = fetchBot('auth/login', ['username', 'password'])
 
-export const logoutUser = () => {
+const logoutBot = () => {
   sessionStorage.removeItem('jwt')
   sessionStorage.removeItem('jwt-init')
 }
 
-export const initJwt = async () => {
+const initJwt = async () => {
   const jwt = sessionStorage.getItem('jwt')
 
   if (jwt) {
@@ -68,8 +73,9 @@ const refreshJwt = async (jwt) => {
     sessionStorage.setItem('jwt', body.jwt)
     sessionStorage.setItem('jwt-init', new Date().getTime())
 
-    return { jwt: body.jwt, user: body.user }
-  } else {
-    throw new Error(body.message)
+    return { success: true, jwt: body.jwt, bot: body.bot }
   }
+  throw new Error(body.message)
 }
+
+export { registerBot, loginBot, logoutBot, initJwt }
