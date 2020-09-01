@@ -1,7 +1,7 @@
 import React, { useContext } from 'react'
 
 import AuthContext from 'context/AuthContext'
-import { ChatContextProvider } from 'context/RepliersContext'
+import { ChatContextProvider } from 'context/ChatContext'
 
 import { Layout } from 'components/Layout'
 import { TmiForm } from 'components/TmiForm'
@@ -11,16 +11,20 @@ import { Welcome } from 'components/Welcome'
 export const MainPage = () => {
   const { isCreated } = useContext(AuthContext)
 
-  return (
-    <Layout>
-      {isCreated ? (
-        <ChatContextProvider>
+  if (isCreated) {
+    return (
+      <ChatContextProvider>
+        <Layout>
           <TmiForm />
           <Repliers />
-        </ChatContextProvider>
-      ) : (
-        <Welcome />
-      )}
+        </Layout>
+      </ChatContextProvider>
+    )
+  }
+
+  return (
+    <Layout>
+      <Welcome />
     </Layout>
   )
 }

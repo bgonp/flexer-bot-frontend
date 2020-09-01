@@ -41,7 +41,9 @@ export const CreateForm = () => {
         wrapperCol={{ span: 12 }}
         onFinish={handleSubmit(onSubmit)}
       >
-        {error && <Alert message={error} type="error" showIcon />}
+        {error && (
+          <Alert message={error} type="error" style={{ marginBottom: '1rem' }} showIcon />
+        )}
 
         <Controller
           name="username"

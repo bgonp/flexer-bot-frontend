@@ -2,7 +2,7 @@ import { useCallback, useReducer, useContext } from 'react'
 import AuthContext from 'context/AuthContext'
 import { getRepliers } from 'services/repliers'
 
-const TYPES = {
+const ACTIONS = {
   ADD_REPLIER: 'add_replier',
   REMOVE_REPLIER: 'add_replier',
   UPDATE_REPLIER: 'update_replier',
@@ -10,13 +10,13 @@ const TYPES = {
 
 const repliersReducer = (state = [], action) => {
   switch (action.type) {
-    case TYPES.ADD_REPLIER:
+    case ACTIONS.ADD_REPLIER:
       return [...state, action.payload]
 
-    case TYPES.REMOVE_REPLIER:
+    case ACTIONS.REMOVE_REPLIER:
       return state.filter((replier) => replier.id !== action.payload)
 
-    case TYPES.UPDATE_REPLIER:
+    case ACTIONS.UPDATE_REPLIER:
       return state.map((replier) =>
         replier.id === action.payload.id ? action.payload : replier
       )
@@ -34,7 +34,7 @@ export const useRepliers = () => {
     async (replier) => {
       // TODO: db save
       dispatch({
-        type: TYPES.ADD_REPLIER,
+        type: ACTIONS.ADD_REPLIER,
         payload: replier,
       })
     },
@@ -45,7 +45,7 @@ export const useRepliers = () => {
     async (replier) => {
       // TODO: db remove
       dispatch({
-        type: TYPES.REMOVE_REPLIER,
+        type: ACTIONS.REMOVE_REPLIER,
         payload: replier.id,
       })
     },
@@ -56,7 +56,7 @@ export const useRepliers = () => {
     async (replier) => {
       // TODO: db update
       dispatch({
-        type: TYPES.UPDATE_REPLIER,
+        type: ACTIONS.UPDATE_REPLIER,
         payload: replier,
       })
     },

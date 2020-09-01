@@ -2,10 +2,11 @@ import React, { useContext, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { Alert, Input, Button, Form, Spin } from 'antd'
 import { RobotOutlined, LockOutlined, VideoCameraOutlined } from '@ant-design/icons'
+import { green } from '@ant-design/colors'
 
 import AuthContext from 'context/AuthContext'
-import ChatContext from 'context/RepliersContext'
-import { AUTH_STATUS } from 'services/tmi'
+import ChatContext from 'context/ChatContext'
+import { TMI_STATUS } from 'services/tmi'
 
 const getAlert = (type, message) => (
   <Alert type={type} message={message} style={{ marginBottom: '1rem' }} showIcon />
@@ -14,7 +15,7 @@ const getAlert = (type, message) => (
 export const TmiForm = () => {
   const { username, token, channel } = useContext(AuthContext).bot
 
-  const { authStatus, loading, connected, connect, disconnect } = useContext(
+  const { tmiStatus, loading, connected, connect, disconnect } = useContext(
     ChatContext
   ).tmi
 
@@ -27,19 +28,19 @@ export const TmiForm = () => {
     if (connected) {
       return getAlert('success', 'Listening Twitch channel chat')
     }
-    switch (authStatus) {
-      case AUTH_STATUS.ERROR:
+    switch (tmiStatus) {
+      case TMI_STATUS.ERROR:
         return getAlert('error', 'An error occurred')
-      case AUTH_STATUS.WRONG_USERNAME:
+      case TMI_STATUS.WRONG_USERNAME:
         return getAlert('error', 'Wrong username')
-      case AUTH_STATUS.WRONG_TOKEN:
+      case TMI_STATUS.WRONG_TOKEN:
         return getAlert('error', 'Wrong token')
-      case AUTH_STATUS.WRONG_CHANNEL:
+      case TMI_STATUS.WRONG_CHANNEL:
         return getAlert('error', 'Wrong channel')
       default:
         return
     }
-  }, [connected, authStatus])
+  }, [connected, tmiStatus])
 
   return (
     <Spin size="large" spinning={loading}>
@@ -102,7 +103,7 @@ export const TmiForm = () => {
               Disconnect
             </Button>
           ) : (
-            <Button shape="round" type="primary" htmlType="submit" disabled={loading}>
+            <Button shape="round" htmlType="submit" disabled={loading}>
               Connect
             </Button>
           )}

@@ -5,11 +5,11 @@ import { useAuth } from 'hooks/useAuth'
 const AuthContext = createContext({})
 
 export const AuthContextProvider = ({ children }) => {
-  const { check, ...auth } = useAuth()
+  const { init, ...auth } = useAuth()
 
   useEffect(() => {
-    check()
-  }, [check])
+    init()
+  }, [init])
 
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>
 }

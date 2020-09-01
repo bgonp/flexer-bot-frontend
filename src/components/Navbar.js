@@ -4,25 +4,37 @@ import { Avatar, Row, Col, Button, Space, Drawer } from 'antd'
 import { RobotFilled } from '@ant-design/icons'
 import { blue } from '@ant-design/colors'
 
+import { TMI_STATUS } from 'services/tmi'
 import AuthContext from 'context/AuthContext'
 import { PasswordForm } from './PasswordForm'
+import ChatContext from 'context/ChatContext'
 
 export const Navbar = () => {
   const {
     isCreated,
     isAuthed,
-    clear,
+    logout,
+    save,
     bot: { username, avatar },
   } = useContext(AuthContext)
+
+  const { tmiStatus } = useContext(ChatContext)
+
   const [drawerVisible, setDrawerVisible] = useState(false)
 
   const history = useHistory()
 
   const login = () => history.push('/login')
   const create = () => history.push('/create')
-  const save = useCallback(() => {
-    if (!isAuthed) setDrawerVisible(true)
-  }, [isAuthed])
+  const update = useCallback(() => {
+    if (!isAuthed) {
+      setDrawerVisible(true)
+    } else if (tmiStatus === TMI_STATUS.VALID) {
+      save()
+    } else {
+      // TODO
+    }
+  }, [isAuthed, tmiStatus, save])
 
   const avatarProps = avatar ? { src: avatar } : { icon: <RobotFilled /> }
 
@@ -40,10 +52,10 @@ export const Navbar = () => {
         <Space>
           {isCreated ? (
             <>
-              <Button shape="round" type="default" onClick={clear}>
+              <Button shape="round" type="default" onClick={logout}>
                 Exit
               </Button>
-              <Button shape="round" type="primary" onClick={save}>
+              <Button shape="round" type="primary" onClick={update}>
                 Save
               </Button>
               {!isAuthed && (

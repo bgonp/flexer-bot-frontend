@@ -1,22 +1,41 @@
-const jwtTTL = 7_200_000 // 2 hours
-const refreshTimer = 10_000 //600_000 // 10 minutes
+const tokenTTL = 7_200_000 // 2 hours
+const refreshTimer = 10_000 // TODO: 600_000 // 10 minutes
 
-const fetchBot = (endpoint, keys) => async (params) => {
+let refreshInterval
+
+const clearStorage = () => {
+  sessionStorage.removeItem('refresh')
+  sessionStorage.removeItem('token-init')
+}
+
+const isAvailable = async (username) => {
+  const url = `${process.env.REACT_APP_API_URL}/auth/available?username=${username}`
+
+  const response = await fetch(url)
+  const body = await response.json()
+
+  return body
+}
+
+const fetchBot = (endpoint, keys) => async (params, callback) => {
   const url = `${process.env.REACT_APP_API_URL}/${endpoint}`
+  const json = {}
+  keys.forEach((key) => (json[key] = params[key]))
   const data = {
     method: 'POST',
     headers: { 'Content-type': 'application/json' },
-    body: JSON.stringify(keys.map((key) => params[key])),
+    body: JSON.stringify(json),
   }
 
   const response = await fetch(url, data)
   const body = await response.json()
 
   if (body.success) {
-    sessionStorage.setItem('jwt', body.jwt)
-    sessionStorage.setItem('jwt-init', new Date().getTime())
+    sessionStorage.setItem('refresh', body.refresh)
+    sessionStorage.setItem('token-init', new Date().getTime())
 
-    setTimeout(checkJwt, refreshTimer)
+    clearInterval(refreshInterval)
+    refreshInterval = setInterval(() => checkToken(callback), refreshTimer)
 
     return { jwt: body.jwt, bot: body.bot }
   } else {
@@ -33,32 +52,58 @@ const registerBot = fetchBot('auth/register', [
 
 const loginBot = fetchBot('auth/login', ['username', 'password'])
 
-const logoutBot = () => {
-  sessionStorage.removeItem('jwt')
-  sessionStorage.removeItem('jwt-init')
+const logoutBot = async (id) => {
+  clearStorage()
+  const url = `${process.env.REACT_APP_API_URL}/auth/logout`
+  const data = {
+    method: 'POST',
+    headers: { 'Content-type': 'application/json' },
+    body: JSON.stringify({ id }),
+  }
+  await fetch(url, data)
 }
 
-const initJwt = async () => {
-  const jwt = sessionStorage.getItem('jwt')
+const updateBot = async (jwt, { id, token, channel }) => {
+  const url = `${process.env.REACT_APP_API_URL}/auth/update`
+  const data = {
+    method: 'PUT',
+    headers: {
+      Authorization: jwt,
+      'Content-type': 'application/json',
+    },
+    body: JSON.stringify({ id, token, channel }),
+  }
 
-  if (jwt) {
-    return refreshJwt(jwt)
+  const response = await fetch(url, data)
+  const body = await response.json()
+
+  return Boolean(body.success)
+}
+
+const initToken = async (callback) => {
+  const refresh = sessionStorage.getItem('refresh')
+
+  if (refresh) {
+    const response = refreshJwt(refresh)
+    refreshInterval = setInterval(() => checkToken(callback), refreshTimer)
+    return response
   }
   return false
 }
 
-const checkJwt = async () => {
-  const jwt = sessionStorage.getItem('jwt')
+const checkToken = async (callback) => {
+  const refresh = sessionStorage.getItem('refresh')
 
-  if (jwt) {
-    const jwtInit = parseInt(sessionStorage.getItem('jwt-init'))
+  if (refresh) {
+    const tokenInit = parseInt(sessionStorage.getItem('token-init'))
     const now = new Date().getTime()
 
-    setTimeout(checkJwt, refreshTimer)
-
-    if (now - jwtInit > jwtTTL / 2) {
-      return refreshJwt(jwt)
+    if (now - tokenInit > tokenTTL / 2) {
+      const { jwt } = await refreshJwt(refresh)
+      callback(jwt)
     }
+  } else {
+    clearInterval(refreshInterval)
   }
 }
 
@@ -70,12 +115,20 @@ const refreshJwt = async (jwt) => {
   const body = await response.json()
 
   if (body.success) {
-    sessionStorage.setItem('jwt', body.jwt)
-    sessionStorage.setItem('jwt-init', new Date().getTime())
+    sessionStorage.setItem('refresh', body.refresh)
+    sessionStorage.setItem('token-init', new Date().getTime())
 
     return { success: true, jwt: body.jwt, bot: body.bot }
   }
   throw new Error(body.message)
 }
 
-export { registerBot, loginBot, logoutBot, initJwt }
+export {
+  isAvailable,
+  registerBot,
+  loginBot,
+  logoutBot,
+  updateBot,
+  initToken,
+  clearStorage,
+}

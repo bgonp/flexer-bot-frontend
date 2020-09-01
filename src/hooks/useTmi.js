@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useContext } from 'react'
-import tmi, { AUTH_STATUS } from 'services/tmi'
+import tmi, { TMI_STATUS } from 'services/tmi'
 import AuthContext from 'context/AuthContext'
 
 export const useTmi = (getReply = () => {}) => {
@@ -10,12 +10,12 @@ export const useTmi = (getReply = () => {}) => {
 
   const [loading, setLoading] = useState(false)
   const [connected, setConnected] = useState(false)
-  const [authStatus, setAuthStatus] = useState(AUTH_STATUS.UNCHECKED)
+  const [tmiStatus, setTmiStatus] = useState(TMI_STATUS.UNCHECKED)
 
-  const setStatus = useCallback(({ loading, connected, authStatus }) => {
+  const setStatus = useCallback(({ loading, connected, tmiStatus }) => {
     loading !== undefined && setLoading(loading)
     connected !== undefined && setConnected(connected)
-    authStatus !== undefined && setAuthStatus(authStatus)
+    tmiStatus !== undefined && setTmiStatus(tmiStatus)
   }, [])
 
   const connect = useCallback(
@@ -45,7 +45,7 @@ export const useTmi = (getReply = () => {}) => {
   }, [setStatus])
 
   useEffect(() => {
-    setAuthStatus(AUTH_STATUS.UNCHECKED)
+    setTmiStatus(TMI_STATUS.UNCHECKED)
   }, [username, token, channel])
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export const useTmi = (getReply = () => {}) => {
   }, [getReply])
 
   return {
-    authStatus,
+    tmiStatus,
     loading,
     connected,
     connect,

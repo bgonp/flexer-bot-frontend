@@ -1,5 +1,13 @@
 import { useState, useCallback, useMemo } from 'react'
-import { registerBot, loginBot, logoutBot, initJwt } from 'services/auth'
+import {
+  isAvailable,
+  registerBot,
+  loginBot,
+  logoutBot,
+  updateBot,
+  initToken,
+  clearStorage,
+} from 'services/auth'
 
 const initialBot = { id: null, username: '', token: '', channel: '', avatar: '' }
 
@@ -7,26 +15,15 @@ export const useAuth = () => {
   const [jwt, setJwt] = useState(null)
   const [bot, setBot] = useState(initialBot)
 
-  const check = useCallback(() => {
-    const result = initJwt()
-    if (result === false) return
-    result
-      .then((response) => {
-        if (response) {
-          setJwt(response.jwt)
-          setBot(response.bot)
-        }
-      })
-      .catch((error) => {
-        setJwt(null)
-        setBot(initialBot)
-        logoutBot()
-        console.error(error)
-      })
-  }, [])
-
-  const create = useCallback(({ username, token, channel }) => {
-    // TODO: Check if username exists on Twitch, is already registered here and/or token works
+  const create = useCallback(async ({ username, token, channel }) => {
+    try {
+      const available = await isAvailable(username)
+      if (!available.success) {
+        return { success: false, error: available.message }
+      }
+    } catch (error) {
+      console.error(error)
+    }
     setBot({ id: null, username, token, channel, avatar: '' })
     return { success: true }
   }, [])
@@ -39,7 +36,7 @@ export const useAuth = () => {
   const fetchBot = useCallback(
     (callback) => async (username, password, token, channel) => {
       try {
-        const response = await callback({ username, password, token, channel })
+        const response = await callback({ username, password, token, channel }, setJwt)
         setJwt(response.jwt)
         setBot(response.bot)
 
@@ -51,14 +48,38 @@ export const useAuth = () => {
     []
   )
 
-  const register = useCallback(fetchBot(registerBot))
+  const register = useCallback(fetchBot(registerBot), [fetchBot])
 
-  const login = useCallback(fetchBot(loginBot))
+  const login = useCallback(fetchBot(loginBot), [fetchBot])
 
-  const clear = useCallback(() => {
+  const logout = useCallback(() => {
     setJwt(null)
     setBot(initialBot)
-    logoutBot()
+    logoutBot(bot.id)
+  }, [bot])
+
+  const save = useCallback(async () => {
+    try {
+      return await updateBot(jwt, bot)
+    } catch (error) {
+      console.error(error)
+    }
+    return false
+  }, [jwt, bot])
+
+  const init = useCallback(async () => {
+    try {
+      const response = await initToken(setJwt)
+
+      if (response.success) {
+        setJwt(response.jwt)
+        setBot(response.bot)
+        return
+      }
+    } catch (error) {
+      console.error(error)
+    }
+    clearStorage()
   }, [])
 
   const isAuthed = useMemo(() => Boolean(jwt), [jwt])
@@ -68,11 +89,12 @@ export const useAuth = () => {
     isAuthed,
     isCreated,
     bot,
-    check,
     create,
     update,
     register,
     login,
-    clear,
+    logout,
+    save,
+    init,
   }
 }

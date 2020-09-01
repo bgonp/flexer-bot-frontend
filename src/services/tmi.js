@@ -1,6 +1,6 @@
 import { client as tmi } from 'tmi.js'
 
-export const AUTH_STATUS = {
+export const TMI_STATUS = {
   UNCHECKED: 'unchecked',
   VALID: 'valid',
   WRONG_USERNAME: 'wrong_username',
@@ -26,11 +26,11 @@ const config = {
       if (checking) {
         checking = false
         if (message.includes('Login authentication failed')) {
-          updateStatus({ authStatus: AUTH_STATUS.WRONG_TOKEN })
+          updateStatus({ tmiStatus: TMI_STATUS.WRONG_TOKEN })
         } else if (message.includes('No response from Twitch')) {
-          updateStatus({ authStatus: AUTH_STATUS.WRONG_CHANNEL })
+          updateStatus({ tmiStatus: TMI_STATUS.WRONG_CHANNEL })
         } else {
-          updateStatus({ authStatus: AUTH_STATUS.ERROR })
+          updateStatus({ tmiStatus: TMI_STATUS.ERROR })
         }
       }
       !isDisconnected() && disconnect()
@@ -50,12 +50,12 @@ const checkCredentials = (message) => {
       const connectedUsername = message.tags['display-name'].toLowerCase()
       if (typedUsername !== connectedUsername) {
         checking = false
-        updateStatus({ authStatus: AUTH_STATUS.WRONG_USERNAME })
+        updateStatus({ tmiStatus: TMI_STATUS.WRONG_USERNAME })
         disconnect()
       }
     } else if (message.command === 'ROOMSTATE') {
       checking = false
-      updateStatus({ loading: false, connected: true, authStatus: AUTH_STATUS.VALID })
+      updateStatus({ loading: false, connected: true, tmiStatus: TMI_STATUS.VALID })
     }
   }
 }
@@ -96,7 +96,7 @@ const connect = async (username, token, channel) => {
   try {
     await client.connect()
   } catch (error) {
-    //console.error(error) // TODO
+    console.error(error) // TODO
   }
 }
 
@@ -106,7 +106,7 @@ const disconnect = async () => {
     checking = false
     client.channels.length = 0
   } catch (error) {
-    console.error(error)
+    console.error(error) // TODO
   }
 }
 
@@ -117,7 +117,7 @@ export default {
   unListenEvents,
   listenChat,
   unListenChat,
-  isDisconnected,
   connect,
   disconnect,
+  isDisconnected,
 }
