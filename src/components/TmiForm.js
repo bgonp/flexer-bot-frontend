@@ -1,6 +1,6 @@
-import React, { useContext, useMemo } from 'react'
+import React, { useContext, useMemo, useCallback } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { Alert, Input, Button, Form, Spin } from 'antd'
+import { Alert, Input, Button, Form, Spin, Tooltip } from 'antd'
 import { RobotOutlined, LockOutlined, VideoCameraOutlined } from '@ant-design/icons'
 import { green } from '@ant-design/colors'
 
@@ -15,13 +15,11 @@ const getAlert = (type, message) => (
 export const TmiForm = () => {
   const { username, token, channel } = useContext(AuthContext).bot
 
-  const { tmiStatus, loading, connected, connect, disconnect } = useContext(
-    ChatContext
-  ).tmi
+  const { tmiStatus, loading, connected, connect, disconnect } = useContext(ChatContext)
 
   const { control, errors, handleSubmit } = useForm({
     mode: 'onChange',
-    defaultValues: { username, token, channel },
+    defaultValues: { token, channel },
   })
 
   const alert = useMemo(() => {
@@ -42,30 +40,32 @@ export const TmiForm = () => {
     }
   }, [connected, tmiStatus])
 
+  const onSubmit = useCallback(
+    (data) => {
+      connect({ username, token: data.token, channel: data.channel })
+    },
+    [connect, username]
+  )
+
   return (
     <Spin size="large" spinning={loading}>
       <Form
         labelCol={{ span: 6 }}
         wrapperCol={{ span: 12 }}
-        onFinish={handleSubmit(connect)}
-        initialValues={{ username, token, channel }}
+        onFinish={handleSubmit(onSubmit)}
+        initialValues={{ token, channel }}
       >
         {alert}
 
-        <Controller
-          name="username"
-          control={control}
-          rules={{ required: 'Bot username required' }}
-          as={
-            <Form.Item
-              validateStatus={errors.username && 'error'}
-              help={errors.username && errors.username.message}
-              label="Bot username"
-            >
-              <Input disabled={loading || connected} prefix={<RobotOutlined />} />
-            </Form.Item>
-          }
-        />
+        <Tooltip
+          trigger="click"
+          title="Bot username cannot be changed"
+          placement="bottom"
+        >
+          <Form.Item label="Bot username">
+            <Input disabled={true} prefix={<RobotOutlined />} value={username} />
+          </Form.Item>
+        </Tooltip>
 
         <Controller
           name="token"

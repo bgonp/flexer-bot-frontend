@@ -10,7 +10,11 @@ export const ChatContextProvider = ({ children }) => {
   const repliers = useRepliers()
   const tmi = useTmi(repliers.getReply)
 
-  return <ChatContext.Provider value={{ tmi, repliers }}>{children}</ChatContext.Provider>
+  return (
+    <ChatContext.Provider value={{ ...tmi, ...repliers }}>
+      {children}
+    </ChatContext.Provider>
+  )
 }
 
 export default ChatContext

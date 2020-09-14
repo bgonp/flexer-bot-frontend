@@ -1,6 +1,6 @@
 import React, { useContext, useCallback, useState } from 'react'
 import { useHistory } from 'react-router-dom'
-import { Avatar, Row, Col, Button, Space, Drawer } from 'antd'
+import { Avatar, Row, Col, Button, Space, Drawer, Modal } from 'antd'
 import { RobotFilled } from '@ant-design/icons'
 import { blue } from '@ant-design/colors'
 
@@ -21,6 +21,7 @@ export const Navbar = () => {
   const { tmiStatus } = useContext(ChatContext)
 
   const [drawerVisible, setDrawerVisible] = useState(false)
+  const [modalVisible, setModalVisible] = useState(false)
 
   const history = useHistory()
 
@@ -29,10 +30,10 @@ export const Navbar = () => {
   const update = useCallback(() => {
     if (!isAuthed) {
       setDrawerVisible(true)
-    } else if (tmiStatus === TMI_STATUS.VALID) {
-      save()
+    } else if (tmiStatus !== TMI_STATUS.VALID) {
+      setModalVisible(true)
     } else {
-      // TODO
+      save()
     }
   }, [isAuthed, tmiStatus, save])
 
@@ -55,10 +56,15 @@ export const Navbar = () => {
               <Button shape="round" type="default" onClick={logout}>
                 Exit
               </Button>
-              <Button shape="round" type="primary" onClick={update}>
+              <Button
+                shape="round"
+                type="primary"
+                onClick={update}
+                danger={tmiStatus !== TMI_STATUS.VALID}
+              >
                 Save
               </Button>
-              {!isAuthed && (
+              {!isAuthed ? (
                 <Drawer
                   title="Save your bot"
                   visible={drawerVisible}
@@ -67,6 +73,19 @@ export const Navbar = () => {
                 >
                   <PasswordForm />
                 </Drawer>
+              ) : (
+                <Modal
+                  title="Verify Twitch token before save"
+                  visible={modalVisible}
+                  footer={null}
+                  onCancel={() => setModalVisible(false)}
+                >
+                  <p>You must verify your Twitch token before saving your data.</p>
+                  <p>
+                    Click the connect button with a correct token to verify it, then you
+                    will be able to save.
+                  </p>
+                </Modal>
               )}
             </>
           ) : (

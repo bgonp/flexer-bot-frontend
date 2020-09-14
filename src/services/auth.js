@@ -29,6 +29,7 @@ const fetchBot = (endpoint, keys) => async (params, callback) => {
 
   const response = await fetch(url, data)
   const body = await response.json()
+  console.log(body)
 
   if (body.success) {
     sessionStorage.setItem('refresh', body.refresh)
